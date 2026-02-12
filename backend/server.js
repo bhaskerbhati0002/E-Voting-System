@@ -6,9 +6,8 @@ const { loadSchemaSync } = require("@graphql-tools/load");
 const { GraphQLFileLoader } = require("@graphql-tools/graphql-file-loader");
 const path = require("path");
 require("dotenv").config();
-
-const resolvers = require("./graphql/resolvers");
-
+const resolvers = require("./resolvers");
+const authenticate = require("./auth/authMiddleware");
 
 const app = express();
 app.use(cors());
@@ -18,10 +17,11 @@ const typeDefs = loadSchemaSync(
   path.join(__dirname, "./graphql/schema.graphql"),
   {
     loaders: [new GraphQLFileLoader()],
-  }
+  },
 );
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
@@ -29,6 +29,10 @@ async function startServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    context: ({ req }) => {
+      const user = authenticate(req);
+      return { user };
+    },
   });
 
   await server.start();
@@ -39,7 +43,9 @@ async function startServer() {
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`GraphQL endpoint ready at http://localhost:${PORT}/api/v1/evoting`);
+    console.log(
+      `GraphQL endpoint ready at http://localhost:${PORT}/api/v1/evoting`,
+    );
   });
 }
 
