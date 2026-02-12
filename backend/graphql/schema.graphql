@@ -1,7 +1,59 @@
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: String!
+  hasVoted: Boolean!
+  createdAt: String
+  updatedAt: String
+}
+
+type AuthResponse {
+  token: String!
+  user: User!
+}
+
+type Candidate {
+  id: ID!
+  name: String!
+  party: String!
+  partyImage: String!
+  voteCount: Int!
+  createdAt: String
+  updatedAt: String
+}
+
+type VoteResponse {
+  message: String!
+}
+
+input RegisterInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input CreateCandidateInput {
+  name: String!
+  party: String!
+  partyImage: String!
+}
+
 type Query {
   hello: String
+  getCandidates: [Candidate!]!
+  getResults: [Candidate!]!
 }
 
 type Mutation {
-  _empty: String
+  registerUser(input: RegisterInput!): AuthResponse
+  loginUser(input: LoginInput!): AuthResponse
+  createCandidate(input: CreateCandidateInput!): Candidate!
+  deleteCandidate(candidateId: ID!): String!
+  vote(candidateId: ID!): VoteResponse!
 }
