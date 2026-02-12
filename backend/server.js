@@ -8,6 +8,8 @@ const path = require("path");
 require("dotenv").config();
 const resolvers = require("./resolvers");
 const authenticate = require("./auth/authMiddleware");
+const User = require("./models/User");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 app.use(cors());
@@ -22,8 +24,34 @@ const typeDefs = loadSchemaSync(
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
+  .then(async () => {
+    console.log("MongoDB Connected");
+    await createDefaultAdmin();
+  })
   .catch((err) => console.log(err));
+
+async function createDefaultAdmin() {
+  try {
+    const existingAdmin = await User.findOne({ role: "ADMIN" });
+
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash("admin@123", 10);
+
+      await User.create({
+        name: "System Admin",
+        email: "admin@evoting.com",
+        password: hashedPassword,
+        role: "ADMIN",
+      });
+
+      console.log("✅ Default Admin Created");
+    } else {
+      console.log("ℹ️ Admin already exists");
+    }
+  } catch (error) {
+    console.log("Error creating default admin:", error);
+  }
+}
 
 async function startServer() {
   const server = new ApolloServer({
