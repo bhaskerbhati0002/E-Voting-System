@@ -27,6 +27,14 @@ type VoteResponse {
   message: String!
 }
 
+type User {
+  _id: ID!
+  name: String!
+  email: String!
+  role: String!
+  hasVoted: Boolean!
+}
+
 input RegisterInput {
   name: String!
   email: String!
@@ -48,6 +56,7 @@ type Query {
   hello: String
   getCandidates: [Candidate!]!
   getResults: [Candidate!]!
+  getVoters: [User!]!
 }
 
 type Mutation {
@@ -56,4 +65,5 @@ type Mutation {
   createCandidate(input: CreateCandidateInput!): Candidate!
   deleteCandidate(candidateId: ID!): String!
   vote(candidateId: ID!): VoteResponse!
+  deleteUser(userId: ID!): String!
 }

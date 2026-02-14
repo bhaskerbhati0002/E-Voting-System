@@ -19,7 +19,7 @@ const registerUser = async ({ name, email, password }) => {
   const token = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "1h" },
   );
 
   return { token, user };
@@ -39,13 +39,31 @@ const loginUser = async ({ email, password }) => {
   const token = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "1h" },
   );
 
   return { token, user };
 };
 
+const getVoters = async () => {
+  return await User.find({ role: "VOTER" });
+};
+
+const deleteUser = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await User.findByIdAndDelete(userId);
+
+  return "User deleted successfully";
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  getVoters,
+  deleteUser,
 };

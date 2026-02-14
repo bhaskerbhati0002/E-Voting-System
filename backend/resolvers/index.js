@@ -6,12 +6,15 @@ const getCandidates = require("./query/getCandidates");
 const deleteCandidate = require("./mutation/deleteCandidate");
 const getResults = require("./query/getResults");
 const vote = require("./mutation/vote");
+const getVoters = require("./query/getVoters");
+const deleteUser = require("./mutation/deleteUser");
 
 const resolvers = {
   Query: {
     hello,
     getCandidates,
     getResults,
+    getVoters,
   },
   Mutation: {
     registerUser,
@@ -19,6 +22,7 @@ const resolvers = {
     createCandidate,
     deleteCandidate,
     vote,
+    deleteUser,
   },
 };
 
