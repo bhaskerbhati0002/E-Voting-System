@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
 import * as XLSX from "xlsx";
@@ -59,12 +59,40 @@ const DELETE_USER = gql`
   }
 `;
 
+const UPDATE_CANDIDATE = gql`
+  mutation UpdateCandidate($candidateId: ID!, $input: UpdateCandidateInput!) {
+    updateCandidate(candidateId: $candidateId, input: $input) {
+      id
+      name
+      party
+      partyImage
+    }
+  }
+`;
+
+const UPDATE_USER = gql`
+  mutation UpdateUser($userId: ID!, $name: String!) {
+    updateUser(userId: $userId, name: $name) {
+      id
+      name
+      email
+    }
+  }
+`;
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("candidates");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [editTarget, setEditTarget] = useState(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, search]);
 
   const { data: candidateData, refetch: refetchCandidates } =
     useQuery(GET_CANDIDATES);
@@ -95,6 +123,20 @@ export default function AdminDashboard() {
   const [deleteUser] = useMutation(DELETE_USER, {
     onCompleted: () => {
       setDeleteTarget(null);
+      refetchVoters();
+    },
+  });
+
+  const [updateCandidate] = useMutation(UPDATE_CANDIDATE, {
+    onCompleted: () => {
+      setEditTarget(null);
+      refetchCandidates();
+    },
+  });
+
+  const [updateUser] = useMutation(UPDATE_USER, {
+    onCompleted: () => {
+      setEditTarget(null);
       refetchVoters();
     },
   });
@@ -131,6 +173,13 @@ export default function AdminDashboard() {
 
     return items;
   }, [search, sortKey, activeTab, candidateData, voterData]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredData, currentPage]);
 
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(filteredData);
@@ -266,7 +315,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((item) => (
+                {paginatedData.map((item) => (
                   <tr key={item._id} className="bg-white shadow-sm rounded-xl">
                     {activeTab === "candidates" ? (
                       <>
@@ -290,13 +339,28 @@ export default function AdminDashboard() {
                     )}
 
                     <td className="px-4 py-3 text-right rounded-r-xl">
-                      <Button
-                        variant="danger"
-                        className="px-4 py-2 text-sm"
-                        onClick={() => setDeleteTarget(item.id)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex justify-end gap-3">
+                        <Button
+                          variant="secondary"
+                          className="px-4 py-2 text-sm"
+                          onClick={() =>
+                            setEditTarget({
+                              type: activeTab,
+                              data: item,
+                            })
+                          }
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="danger"
+                          className="px-4 py-2 text-sm"
+                          onClick={() => setDeleteTarget(item.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -304,6 +368,49 @@ export default function AdminDashboard() {
             </table>
           </div>
         </Card>
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className={`px-4 py-2 rounded-xl border ${
+                currentPage === 1
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-100"
+              }`}
+            >
+              Previous
+            </button>
+
+            <div className="flex gap-2">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(index + 1)}
+                  className={`w-8 h-8 rounded-full ${
+                    currentPage === index + 1
+                      ? "bg-blue-600 text-white"
+                      : "bg-white border hover:bg-slate-100"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className={`px-4 py-2 rounded-xl border ${
+                currentPage === totalPages
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-100"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add Candidate Modal */}
@@ -334,6 +441,31 @@ export default function AdminDashboard() {
               </Button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {editTarget && (
+        <Modal onClose={() => setEditTarget(null)}>
+          <EditForm
+            editTarget={editTarget}
+            onSubmit={(input) => {
+              if (editTarget.type === "candidates") {
+                updateCandidate({
+                  variables: {
+                    candidateId: editTarget.data.id,
+                    input,
+                  },
+                });
+              } else {
+                updateUser({
+                  variables: {
+                    userId: editTarget.data.id,
+                    name: input.name,
+                  },
+                });
+              }
+            }}
+          />
         </Modal>
       )}
     </div>
@@ -440,6 +572,75 @@ function AddForm({ activeTab, onSubmit }) {
 
       <Button type="submit" className="w-full">
         Create
+      </Button>
+    </form>
+  );
+}
+
+function EditForm({ editTarget, onSubmit }) {
+  const isCandidate = editTarget.type === "candidates";
+  const data = editTarget.data;
+
+  const [form, setForm] = useState({
+    name: data.name || "",
+    party: data.party || "",
+    partyImage: data.partyImage || "",
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (isCandidate) {
+      onSubmit({
+        name: form.name,
+        party: form.party,
+        partyImage: form.partyImage,
+      });
+    } else {
+      onSubmit({
+        name: form.name,
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <h3 className="text-lg font-semibold">
+        Edit {isCandidate ? "Candidate" : "Voter"}
+      </h3>
+
+      <input
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        className="w-full px-4 py-2 border rounded-xl"
+        placeholder="Name"
+      />
+
+      {isCandidate && (
+        <>
+          <input
+            value={form.party}
+            onChange={(e) => setForm({ ...form, party: e.target.value })}
+            className="w-full px-4 py-2 border rounded-xl"
+            placeholder="Party"
+          />
+
+          <input
+            value={form.partyImage}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                partyImage: e.target.value,
+              })
+            }
+            className="w-full px-4 py-2 border rounded-xl"
+            placeholder="Party Image URL"
+          />
+        </>
+      )}
+
+      <Button type="submit" className="w-full">
+        Save Changes
       </Button>
     </form>
   );

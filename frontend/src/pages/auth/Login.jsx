@@ -10,7 +10,9 @@ const LOGIN_USER = gql`
     loginUser(input: $input) {
       token
       user {
+        id
         name
+        email
         role
       }
     }
@@ -33,6 +35,8 @@ export default function Login() {
       localStorage.setItem("token", token);
       localStorage.setItem("role", user.role);
       localStorage.setItem("name", user.name);
+      localStorage.setItem("id", user.id);
+      localStorage.setItem("email", user.email);
 
       // Redirect based on role
       if (user.role === "ADMIN") {
