@@ -4,6 +4,7 @@ import Login from "./pages/auth/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import VoterDashboard from "./pages/voter/VoterDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import Profile from "./pages/voter/Profile";
 
 function App() {
   return (
@@ -28,9 +29,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Layout>
   );
 }
+
 
 export default App;
