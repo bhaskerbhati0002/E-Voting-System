@@ -1,12 +1,20 @@
-export default function Button({ children, onClick, type = "button", variant = "primary", disabled }) {
-  
+export default function Button({
+  children,
+  onClick,
+  type = "button",
+  variant = "primary",
+  disabled,
+}) {
   const base =
-    "px-5 py-2 rounded-lg font-medium transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+    "px-6 py-2.5 rounded-xl font-medium transition-all duration-300 transform active:scale-95 relative overflow-hidden cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 
   const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    secondary: "bg-sky-100 text-blue-700 hover:bg-sky-200",
-    danger: "bg-red-500 text-white hover:bg-red-600",
+    primary:
+      "bg-gradient-to-r from-blue-600 to-sky-500 text-white hover:shadow-lg hover:scale-105",
+    secondary:
+      "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 hover:shadow-md hover:scale-105",
+    danger:
+      "bg-gradient-to-r from-red-500 to-rose-500 text-white hover:shadow-lg hover:scale-105",
   };
 
   return (
@@ -16,7 +24,10 @@ export default function Button({ children, onClick, type = "button", variant = "
       disabled={disabled}
       className={`${base} ${variants[variant]}`}
     >
-      {children}
+      <span className="relative z-10">{children}</span>
+
+      {/* Subtle hover glow layer */}
+      <span className="absolute inset-0 bg-white opacity-0 hover:opacity-10 transition-opacity duration-300"></span>
     </button>
   );
 }
