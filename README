@@ -2,7 +2,3 @@ admin pwd: admin@123
 normal pwd: 123456
 
 by default admin role creation on start of the application!!
-
-
-reset pwd with email verification
-email notification for voted to this party
