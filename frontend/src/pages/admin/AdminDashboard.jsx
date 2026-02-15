@@ -286,9 +286,9 @@ export default function AdminDashboard() {
 
             <Button onClick={exportToExcel}>Export</Button>
 
-            <Button onClick={() => setShowModal(true)}>
-              {activeTab === "candidates" ? "Add Candidate" : "Add Voter"}
-            </Button>
+            {activeTab === "candidates" && (
+              <Button onClick={() => setShowModal(true)}>Add Candidate</Button>
+            )}
           </div>
         </div>
 
@@ -414,17 +414,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* Add Candidate Modal */}
-      {showModal && (
+      {showModal && activeTab === "candidates" && (
         <Modal onClose={() => setShowModal(false)}>
           <AddForm
-            activeTab={activeTab}
-            onSubmit={(input) => {
-              if (activeTab === "candidates") {
-                createCandidate({ variables: { input } });
-              } else {
-                registerUser({ variables: { input } });
-              }
-            }}
+            onSubmit={(input) => createCandidate({ variables: { input } })}
           />
         </Modal>
       )}
