@@ -5,12 +5,14 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import VoterDashboard from "./pages/voter/VoterDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Profile from "./pages/voter/Profile";
+import Register from "./pages/auth/Register";
 
 function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/admin"
@@ -42,6 +44,5 @@ function App() {
     </Layout>
   );
 }
-
 
 export default App;

@@ -8,6 +8,8 @@ const getResults = require("./query/getResults");
 const vote = require("./mutation/vote");
 const getVoters = require("./query/getVoters");
 const deleteUser = require("./mutation/deleteUser");
+const updateUser = require("./mutation/updateUser");
+const updateCandidate = require("./mutation/updateCandidate");
 
 const resolvers = {
   Query: {
@@ -23,6 +25,8 @@ const resolvers = {
     deleteCandidate,
     vote,
     deleteUser,
+    updateUser,
+    updateCandidate,
   },
 };
 
