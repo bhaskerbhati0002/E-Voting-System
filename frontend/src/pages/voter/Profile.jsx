@@ -3,6 +3,7 @@ import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import { useNavigate } from "react-router-dom";
 
 const UPDATE_USER = gql`
   mutation UpdateUser($userId: ID!, $name: String!) {
@@ -20,6 +21,12 @@ export default function Profile() {
   const role = localStorage.getItem("role");
   const email = localStorage.getItem("email");
   const storedName = localStorage.getItem("name");
+  const navigate = useNavigate();
+
+  const goToDashboard = () => {
+    if (role === "ADMIN") navigate("/admin");
+    else navigate("/voter");
+  };
 
   const [name, setName] = useState(storedName);
   const [editing, setEditing] = useState(false);
@@ -90,19 +97,29 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6">
-            {editing ? (
-              <>
-                <Button variant="secondary" onClick={() => setEditing(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setEditing(true)}>Edit Profile</Button>
-            )}
+          <div className="flex justify-between items-center gap-4 pt-6">
+            <Button
+              variant="secondary"
+              onClick={goToDashboard}
+              className="px-4 py-2 rounded-xl border border-blue-100 bg-white/70 hover:bg-blue-50 transition"
+            >
+              ← Back to Dashboard
+            </Button>
+
+            <div className="flex gap-4">
+              {editing ? (
+                <>
+                  <Button variant="secondary" onClick={() => setEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setEditing(true)}>Edit Profile</Button>
+              )}
+            </div>
           </div>
         </div>
       </Card>

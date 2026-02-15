@@ -1,7 +1,11 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import Card from "../../components/ui/Card";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
+import Button from "../../components/ui/Button";
 
+import Card from "../../components/ui/Card";
 import {
   ResponsiveContainer,
   BarChart,
@@ -25,17 +29,21 @@ const GET_RESULTS = gql`
 `;
 
 export default function Results() {
+  // ✅ Hooks FIRST (no early return before hooks)
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role");
+  const firedRef = useRef(false);
+
   const { data, loading, error } = useQuery(GET_RESULTS);
 
-  if (loading) {
-    return <p className="text-center text-slate-500">Loading results...</p>;
-  }
+  const goToDashboard = () => {
+    if (role === "ADMIN") navigate("/admin");
+    else navigate("/voter");
+  };
 
-  if (error) {
-    return <p className="text-center text-red-500">{error.message}</p>;
-  }
-
+  // ✅ Safe defaults so calculations don't crash during loading
   const results = data?.getResults || [];
+
   const totalVotes = results.reduce((sum, c) => sum + (c.voteCount || 0), 0);
   const totalCandidates = results.length;
 
@@ -50,6 +58,47 @@ export default function Results() {
     votes: c.voteCount || 0,
   }));
 
+  // ✅ Confetti hook ALWAYS runs (even while loading), but only fires when topVote>0
+  useEffect(() => {
+    if (topVote > 0 && !firedRef.current) {
+      firedRef.current = true;
+
+      confetti({
+        particleCount: isTie ? 160 : 220,
+        spread: 70,
+        origin: { y: 0.2 },
+      });
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 120,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0.1, y: 0.3 },
+        });
+        confetti({
+          particleCount: 120,
+          angle: 120,
+          spread: 55,
+          origin: { x: 0.9, y: 0.3 },
+        });
+      }, 250);
+    }
+
+    if (topVote === 0) {
+      firedRef.current = false;
+    }
+  }, [topVote, isTie]);
+
+  // ✅ Now it's safe to early return
+  if (loading) {
+    return <p className="text-center text-slate-500">Loading results...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center text-red-500">{error.message}</p>;
+  }
+
   return (
     <div className="space-y-10 animate-fade-in">
       {/* Header */}
@@ -60,6 +109,16 @@ export default function Results() {
         <p className="text-slate-500 mt-2">
           Analytics overview of votes and winner summary
         </p>
+
+        <div className="mt-5">
+          <Button
+            variant="secondary"
+            onClick={goToDashboard}
+            className="px-4 py-2 rounded-xl border border-blue-100 bg-white/70 hover:bg-blue-50 transition"
+          >
+            ← Back to Dashboard
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -77,10 +136,10 @@ export default function Results() {
         </Card>
 
         <Card>
+          <p className="text-sm text-slate-500">Winner</p>
           <p className="text-lg font-bold text-slate-800 mt-2">
             {topVote === 0 ? "—" : isTie ? "Tie" : winners[0].name}
           </p>
-
           <p className="text-sm text-blue-600 font-medium">
             {topVote === 0
               ? ""
@@ -91,45 +150,46 @@ export default function Results() {
         </Card>
       </div>
 
-      {/* Winner Highlight */}
+      {/* Winner / Tie Highlight */}
       {topVote > 0 && (
         <Card>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              {/* If tie, show first party image (optional) */}
-              {winners[0]?.partyImage && (
-                <img
-                  src={winners[0].partyImage}
-                  alt={winners[0].party}
-                  className="h-16 w-16 object-contain"
-                />
-              )}
+          <div className="animate-fade-in transition-transform duration-300 hover:scale-[1.01]">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                {winners[0]?.partyImage && (
+                  <img
+                    src={winners[0].partyImage}
+                    alt={winners[0].party}
+                    className="h-16 w-16 object-contain"
+                  />
+                )}
 
-              <div>
+                <div>
+                  <p className="text-sm text-slate-500">
+                    {isTie ? "Result" : "Leading Candidate"}
+                  </p>
+
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    {isTie ? "Tie" : winners[0].name}
+                  </h3>
+
+                  <p className="text-blue-600 font-medium">
+                    {isTie
+                      ? winners.map((w) => `${w.name} (${w.party})`).join(" • ")
+                      : winners[0].party}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center md:text-right">
+                <p className="text-sm text-slate-500">Top Votes</p>
+                <p className="text-3xl font-bold text-green-600">{topVote}</p>
                 <p className="text-sm text-slate-500">
-                  {isTie ? "Result" : "Leading Candidate"}
-                </p>
-
-                <h3 className="text-2xl font-bold text-slate-800">
-                  {isTie ? "Tie" : winners[0].name}
-                </h3>
-
-                <p className="text-blue-600 font-medium">
-                  {isTie
-                    ? winners.map((w) => `${w.name} (${w.party})`).join(" • ")
-                    : winners[0].party}
+                  {totalVotes > 0
+                    ? `${Math.round((topVote / totalVotes) * 100)}% share`
+                    : "0% share"}
                 </p>
               </div>
-            </div>
-
-            <div className="text-center md:text-right">
-              <p className="text-sm text-slate-500">Top Votes</p>
-              <p className="text-3xl font-bold text-green-600">{topVote}</p>
-              <p className="text-sm text-slate-500">
-                {totalVotes > 0
-                  ? `${Math.round((topVote / totalVotes) * 100)}% share`
-                  : "0% share"}
-              </p>
             </div>
           </div>
         </Card>
@@ -185,12 +245,14 @@ export default function Results() {
                 <th className="px-4 py-2">Share</th>
               </tr>
             </thead>
+
             <tbody>
               {results.map((c) => {
                 const share =
                   totalVotes > 0
                     ? Math.round((c.voteCount / totalVotes) * 100)
                     : 0;
+
                 const isWinner = winners.some(
                   (w) => String(w.id) === String(c.id),
                 );
@@ -207,6 +269,7 @@ export default function Results() {
                           />
                         )}
                         <span>{c.name}</span>
+
                         {isWinner && (
                           <span className="ml-2 text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
                             Winner
