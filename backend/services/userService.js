@@ -61,9 +61,21 @@ const deleteUser = async (userId) => {
   return "User deleted successfully";
 };
 
+const updateUser = async (userId, name) => {
+  const user = await User.findById(userId);
+
+  if (!user) throw new Error("User not found");
+
+  user.name = name;
+  await user.save();
+
+  return user;
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getVoters,
   deleteUser,
+  updateUser,
 };

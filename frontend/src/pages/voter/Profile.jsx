@@ -1,25 +1,108 @@
+import { useState } from "react";
+import { gql } from "@apollo/client";
+import { useMutation } from "@apollo/client/react";
 import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+
+const UPDATE_USER = gql`
+  mutation UpdateUser($userId: ID!, $name: String!) {
+    updateUser(userId: $userId, name: $name) {
+      id
+      name
+      email
+      role
+    }
+  }
+`;
 
 export default function Profile() {
-  const name = localStorage.getItem("name");
+  const id = localStorage.getItem("id");
   const role = localStorage.getItem("role");
+  const email = localStorage.getItem("email");
+  const storedName = localStorage.getItem("name");
+
+  const [name, setName] = useState(storedName);
+  const [editing, setEditing] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const [updateUser, { loading }] = useMutation(UPDATE_USER, {
+    onCompleted: (data) => {
+      // Update localStorage
+      localStorage.setItem("name", data.updateUser.name);
+      setEditing(false);
+      setMessage("Profile updated successfully.");
+    },
+    onError: (err) => {
+      setMessage(err.message);
+    },
+  });
+
+  const handleSave = () => {
+    updateUser({
+      variables: {
+        userId: id,
+        name,
+      },
+    });
+  };
 
   return (
-    <div className="flex justify-center animate-fade-in">
+    <div className="max-w-3xl mx-auto animate-fade-in">
       <Card>
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
-          User Profile
-        </h2>
-
-        <div className="space-y-4 text-slate-700">
-          <div>
-            <p className="text-sm text-slate-500">Name</p>
-            <p className="font-medium">{name}</p>
+        <div className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-slate-800">My Profile</h2>
+            <p className="text-slate-500 mt-2">Manage your account details</p>
           </div>
 
-          <div>
-            <p className="text-sm text-slate-500">Role</p>
-            <p className="font-medium">{role}</p>
+          {message && (
+            <div className="text-center text-green-600 font-medium">
+              {message}
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <label className="text-sm text-slate-500">Name</label>
+              {editing ? (
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mt-2 w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-400"
+                />
+              ) : (
+                <p className="mt-2 text-lg font-semibold text-slate-800">
+                  {name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-500">Email</label>
+              <p className="mt-2 text-lg font-semibold text-slate-800">
+                {email}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-500">Role</label>
+              <p className="mt-2 text-lg font-semibold text-blue-600">{role}</p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4 pt-6">
+            {editing ? (
+              <>
+                <Button variant="secondary" onClick={() => setEditing(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditing(true)}>Edit Profile</Button>
+            )}
           </div>
         </div>
       </Card>

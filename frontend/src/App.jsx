@@ -6,6 +6,7 @@ import VoterDashboard from "./pages/voter/VoterDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Profile from "./pages/voter/Profile";
 import Results from "./pages/results/Results";
+import Register from "./pages/auth/Register";
 
 function App() {
   return (
@@ -20,6 +21,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/register" element={<Register />} />
+
         <Route
           path="/admin"
           element={
