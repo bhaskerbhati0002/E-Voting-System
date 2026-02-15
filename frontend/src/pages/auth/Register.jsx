@@ -5,9 +5,9 @@ import { useNavigate, Link } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 
-const LOGIN_USER = gql`
-  mutation Login($input: LoginInput!) {
-    loginUser(input: $input) {
+const REGISTER_USER = gql`
+  mutation Register($input: RegisterInput!) {
+    registerUser(input: $input) {
       token
       user {
         id
@@ -19,45 +19,40 @@ const LOGIN_USER = gql`
   }
 `;
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
   });
 
-  const [loginUser, { loading, error }] = useMutation(LOGIN_USER, {
+  const [registerUser, { loading, error }] = useMutation(REGISTER_USER, {
     onCompleted: (data) => {
-      const { token, user } = data.loginUser;
+      const { token, user } = data.registerUser;
 
-      // Store token
+      // store auth
       localStorage.setItem("token", token);
       localStorage.setItem("role", user.role);
       localStorage.setItem("name", user.name);
       localStorage.setItem("id", user.id);
       localStorage.setItem("email", user.email);
 
-      // Redirect based on role
-      if (user.role === "ADMIN") {
-        navigate("/admin");
-      } else {
-        navigate("/voter");
-      }
+      // redirect
+      if (user.role === "ADMIN") navigate("/admin");
+      else navigate("/voter");
     },
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    loginUser({
+    registerUser({
       variables: {
         input: formData,
       },
@@ -68,13 +63,26 @@ export default function Login() {
     <div className="flex justify-center items-center min-h-[75vh] animate-fade-in">
       <Card>
         <h2 className="text-3xl font-bold mb-2 text-center bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
-          Welcome Back
+          Create Account
         </h2>
+
         <p className="text-center text-slate-500 mb-6">
-          Login to participate in the secure election process
+          Register to participate in the election
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 w-80">
+          <div>
+            <label className="block text-sm mb-1 text-slate-600">Name</label>
+            <input
+              type="text"
+              name="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
+            />
+          </div>
+
           <div>
             <label className="block text-sm mb-1 text-slate-600">Email</label>
             <input
@@ -88,9 +96,7 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-slate-600">
-              Password
-            </label>
+            <label className="block text-sm mb-1 text-slate-600">Password</label>
             <input
               type="password"
               name="password"
@@ -104,15 +110,13 @@ export default function Login() {
           {error && <p className="text-red-500 text-sm">{error.message}</p>}
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Creating..." : "Register"}
           </Button>
+
           <p className="text-sm text-center text-slate-500 mt-3">
-            Don&apos;t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 font-medium hover:underline"
-            >
-              Register here
+            Already have an account?{" "}
+            <Link to="/" className="text-blue-600 font-medium hover:underline">
+              Login here
             </Link>
           </p>
         </form>

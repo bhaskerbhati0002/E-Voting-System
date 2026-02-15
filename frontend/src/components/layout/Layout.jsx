@@ -30,6 +30,19 @@ export default function Layout({ children }) {
     };
   }, []);
 
+  const handleLogoClick = () => {
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    if (role === "ADMIN") {
+      navigate("/admin");
+    } else {
+      navigate("/voter");
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-white">
       {/* Gradient Mesh Background */}
@@ -55,7 +68,10 @@ export default function Layout({ children }) {
             {/* Soft Glow Behind Header */}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/10 via-transparent to-sky-400/10 blur-xl -z-10"></div>
 
-            <div className="flex items-center gap-3 group cursor-pointer">
+            <div
+              onClick={handleLogoClick}
+              className="flex items-center gap-3 group cursor-pointer"
+            >
               <img
                 src={logo}
                 alt="E-Voting Logo"

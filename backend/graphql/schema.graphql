@@ -52,6 +52,12 @@ input CreateCandidateInput {
   partyImage: String!
 }
 
+input UpdateCandidateInput {
+  name: String
+  party: String
+  partyImage: String
+}
+
 type Query {
   hello: String
   getCandidates: [Candidate!]!
@@ -66,4 +72,6 @@ type Mutation {
   deleteCandidate(candidateId: ID!): String!
   vote(candidateId: ID!): VoteResponse!
   deleteUser(userId: ID!): String!
+  updateCandidate(candidateId: ID!, input: UpdateCandidateInput!): Candidate!
+  updateUser(userId: ID!, name: String!): User!
 }
