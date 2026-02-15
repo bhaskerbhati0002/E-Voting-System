@@ -5,6 +5,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import VoterDashboard from "./pages/voter/VoterDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Profile from "./pages/voter/Profile";
+import Results from "./pages/results/Results";
 import Register from "./pages/auth/Register";
 
 function App() {
@@ -12,6 +13,14 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route
+          path="/results"
+          element={
+            <ProtectedRoute>
+              <Results />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/register" element={<Register />} />
 
         <Route
@@ -22,7 +31,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/voter"
           element={
@@ -31,7 +39,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile"
           element={

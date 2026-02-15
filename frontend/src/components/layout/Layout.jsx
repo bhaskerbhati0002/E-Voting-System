@@ -138,6 +138,16 @@ export default function Layout({ children }) {
                     </button>
 
                     <button
+                      onClick={() => {
+                        navigate("/results");
+                        setOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition"
+                    >
+                      📊 Results
+                    </button>
+
+                    <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 
                      hover:bg-red-50 text-red-600 transition"
