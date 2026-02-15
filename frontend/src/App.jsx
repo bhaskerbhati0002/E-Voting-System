@@ -5,13 +5,21 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import VoterDashboard from "./pages/voter/VoterDashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Profile from "./pages/voter/Profile";
+import Results from "./pages/results/Results";
 
 function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Login />} />
-
+        <Route
+          path="/results"
+          element={
+            <ProtectedRoute>
+              <Results />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin"
           element={
@@ -20,7 +28,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/voter"
           element={
@@ -29,7 +36,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -42,6 +48,5 @@ function App() {
     </Layout>
   );
 }
-
 
 export default App;
