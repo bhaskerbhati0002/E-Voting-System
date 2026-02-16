@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import { useNavigate, Link } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import ResetPasswordModal from "./ResetPasswordModal";
 
 const LOGIN_USER = gql`
   mutation Login($input: LoginInput!) {
@@ -21,6 +22,7 @@ const LOGIN_USER = gql`
 
 export default function Login() {
   const navigate = useNavigate();
+  const [showReset, setShowReset] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -107,6 +109,16 @@ export default function Login() {
             {loading ? "Logging in..." : "Login"}
           </Button>
           <p className="text-sm text-center text-slate-500 mt-3">
+            Forgot password?{" "}
+            <Link
+              type="button"
+              onClick={() => setShowReset(true)}
+              className="text-blue-600 font-medium hover:underline"
+            >
+              Reset here
+            </Link>
+          </p>
+          <p className="text-sm text-center text-slate-500 mt-3">
             Don&apos;t have an account?{" "}
             <Link
               to="/register"
@@ -117,6 +129,10 @@ export default function Login() {
           </p>
         </form>
       </Card>
+      <ResetPasswordModal
+        open={showReset}
+        onClose={() => setShowReset(false)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import { useNavigate } from "react-router-dom";
+import ResetPasswordModal from "../auth/ResetPasswordModal";
 
 const UPDATE_USER = gql`
   mutation UpdateUser($userId: ID!, $name: String!) {
@@ -22,6 +23,7 @@ export default function Profile() {
   const email = localStorage.getItem("email");
   const storedName = localStorage.getItem("name");
   const navigate = useNavigate();
+  const [showReset, setShowReset] = useState(false);
 
   const goToDashboard = () => {
     if (role === "ADMIN") navigate("/admin");
@@ -117,12 +119,25 @@ export default function Profile() {
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setEditing(true)}>Edit Profile</Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowReset(true)}
+                  >
+                    Reset Password
+                  </Button>
+                  <Button onClick={() => setEditing(true)}>Edit Profile</Button>
+                </>
               )}
             </div>
           </div>
         </div>
       </Card>
+      <ResetPasswordModal
+        open={showReset}
+        onClose={() => setShowReset(false)}
+        presetEmail={email}
+      />
     </div>
   );
 }
