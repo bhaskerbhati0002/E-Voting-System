@@ -25,6 +25,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    voterId: "",
     password: "",
   });
 
@@ -90,6 +91,18 @@ export default function Register() {
               name="email"
               required
               value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm mb-1 text-slate-600">Voter ID</label>
+            <input
+              type="text"
+              name="voterId"
+              required
+              value={formData.voterId}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
             />

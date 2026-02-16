@@ -39,14 +39,6 @@ const CREATE_CANDIDATE = gql`
   }
 `;
 
-const REGISTER_USER = gql`
-  mutation RegisterUser($input: RegisterInput!) {
-    registerUser(input: $input) {
-      token
-    }
-  }
-`;
-
 const DELETE_CANDIDATE = gql`
   mutation DeleteCandidate($candidateId: ID!) {
     deleteCandidate(candidateId: $candidateId)
@@ -86,9 +78,10 @@ export default function AdminDashboard() {
   const [sortKey, setSortKey] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [editTarget, setEditTarget] = useState(null);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -103,13 +96,6 @@ export default function AdminDashboard() {
     onCompleted: () => {
       setShowModal(false);
       refetchCandidates();
-    },
-  });
-
-  const [registerUser] = useMutation(REGISTER_USER, {
-    onCompleted: () => {
-      setShowModal(false);
-      refetchVoters();
     },
   });
 
@@ -167,7 +153,7 @@ export default function AdminDashboard() {
 
     if (sortKey) {
       items = [...items].sort((a, b) =>
-        String(a[sortKey]).localeCompare(String(b[sortKey])),
+        String(a[sortKey]).localeCompare(String(b[sortKey]))
       );
     }
 
@@ -200,17 +186,12 @@ export default function AdminDashboard() {
 
     try {
       if (activeTab === "candidates") {
-        await deleteCandidate({
-          variables: { candidateId: deleteTarget },
-        });
+        await deleteCandidate({ variables: { candidateId: deleteTarget } });
         await refetchCandidates();
       } else {
-        await deleteUser({
-          variables: { userId: deleteTarget },
-        });
+        await deleteUser({ variables: { userId: deleteTarget } });
         await refetchVoters();
       }
-
       setDeleteTarget(null);
     } catch (err) {
       console.error(err);
@@ -269,6 +250,7 @@ export default function AdminDashboard() {
             <select
               className="px-4 py-2 border rounded-xl"
               onChange={(e) => setSortKey(e.target.value)}
+              value={sortKey}
             >
               <option value="">Sort</option>
               {activeTab === "candidates" ? (
@@ -300,33 +282,34 @@ export default function AdminDashboard() {
                 <tr className="text-slate-600 text-sm">
                   {activeTab === "candidates" ? (
                     <>
-                      <th>Name</th>
-                      <th>Party</th>
-                      <th>Action</th>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Party</th>
+                      <th className="px-4 py-2 text-right">Action</th>
                     </>
                   ) : (
                     <>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Voted</th>
-                      <th>Action</th>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Email</th>
+                      <th className="px-4 py-2">Voted</th>
+                      <th className="px-4 py-2 text-right">Action</th>
                     </>
                   )}
                 </tr>
               </thead>
+
               <tbody>
                 {paginatedData.map((item) => (
-                  <tr key={item._id} className="bg-white shadow-sm rounded-xl">
+                  <tr key={item.id} className="bg-white shadow-sm rounded-xl">
                     {activeTab === "candidates" ? (
                       <>
                         <td className="px-4 py-3 rounded-l-xl">{item.name}</td>
-                        <td className="px-4 py-3 rounded-l-xl">{item.party}</td>
+                        <td className="px-4 py-3">{item.party}</td>
                       </>
                     ) : (
                       <>
                         <td className="px-4 py-3 rounded-l-xl">{item.name}</td>
-                        <td className="px-4 py-3 rounded-l-xl">{item.email}</td>
-                        <td className="px-4 py-3 rounded-l-xl">
+                        <td className="px-4 py-3">{item.email}</td>
+                        <td className="px-4 py-3">
                           {item.hasVoted ? (
                             <span className="text-green-600 font-semibold">
                               Yes
@@ -364,10 +347,23 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ))}
+
+                {paginatedData.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={activeTab === "candidates" ? 3 : 4}
+                      className="text-center text-slate-500 py-8"
+                    >
+                      No records found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </Card>
+
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-between items-center mt-6">
             <button
@@ -416,7 +412,7 @@ export default function AdminDashboard() {
       {/* Add Candidate Modal */}
       {showModal && activeTab === "candidates" && (
         <Modal onClose={() => setShowModal(false)}>
-          <AddForm
+          <AddCandidateForm
             onSubmit={(input) => createCandidate({ variables: { input } })}
           />
         </Modal>
@@ -437,6 +433,7 @@ export default function AdminDashboard() {
         </Modal>
       )}
 
+      {/* Edit Modal */}
       {editTarget && (
         <Modal onClose={() => setEditTarget(null)}>
           <EditForm
@@ -481,38 +478,21 @@ function Modal({ children, onClose }) {
   );
 }
 
-function AddForm({ activeTab, onSubmit }) {
+function AddCandidateForm({ onSubmit }) {
   const [form, setForm] = useState({
     name: "",
     party: "",
     partyImage: "",
-    email: "",
-    password: "",
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (activeTab === "candidates") {
-      onSubmit({
-        name: form.name,
-        party: form.party,
-        partyImage: form.partyImage,
-      });
-    } else {
-      onSubmit({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-      });
-    }
+    onSubmit(form);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold">
-        {activeTab === "candidates" ? "Add Candidate" : "Add Voter"}
-      </h3>
+      <h3 className="text-lg font-semibold">Add Candidate</h3>
 
       <input
         placeholder="Name"
@@ -521,47 +501,18 @@ function AddForm({ activeTab, onSubmit }) {
         onChange={(e) => setForm({ ...form, name: e.target.value })}
       />
 
-      {activeTab === "candidates" ? (
-        <>
-          <input
-            placeholder="Party"
-            required
-            className="w-full px-4 py-2 border rounded-xl"
-            onChange={(e) => setForm({ ...form, party: e.target.value })}
-          />
-          <input
-            placeholder="Party Image URL"
-            className="w-full px-4 py-2 border rounded-xl"
-            onChange={(e) =>
-              setForm({
-                ...form,
-                partyImage: e.target.value,
-              })
-            }
-          />
-        </>
-      ) : (
-        <>
-          <input
-            placeholder="Email"
-            required
-            className="w-full px-4 py-2 border rounded-xl"
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            required
-            className="w-full px-4 py-2 border rounded-xl"
-            onChange={(e) =>
-              setForm({
-                ...form,
-                password: e.target.value,
-              })
-            }
-          />
-        </>
-      )}
+      <input
+        placeholder="Party"
+        required
+        className="w-full px-4 py-2 border rounded-xl"
+        onChange={(e) => setForm({ ...form, party: e.target.value })}
+      />
+
+      <input
+        placeholder="Party Image URL"
+        className="w-full px-4 py-2 border rounded-xl"
+        onChange={(e) => setForm({ ...form, partyImage: e.target.value })}
+      />
 
       <Button type="submit" className="w-full">
         Create
@@ -590,9 +541,7 @@ function EditForm({ editTarget, onSubmit }) {
         partyImage: form.partyImage,
       });
     } else {
-      onSubmit({
-        name: form.name,
-      });
+      onSubmit({ name: form.name });
     }
   };
 
@@ -621,10 +570,7 @@ function EditForm({ editTarget, onSubmit }) {
           <input
             value={form.partyImage}
             onChange={(e) =>
-              setForm({
-                ...form,
-                partyImage: e.target.value,
-              })
+              setForm({ ...form, partyImage: e.target.value })
             }
             className="w-full px-4 py-2 border rounded-xl"
             placeholder="Party Image URL"
