@@ -35,6 +35,11 @@ type User {
   hasVoted: Boolean!
 }
 
+type GenericResponse {
+  success: Boolean!
+  message: String!
+}
+
 input RegisterInput {
   name: String!
   email: String!
@@ -74,4 +79,10 @@ type Mutation {
   deleteUser(userId: ID!): String!
   updateCandidate(candidateId: ID!, input: UpdateCandidateInput!): Candidate!
   updateUser(userId: ID!, name: String!): User!
+  requestPasswordReset(email: String!): GenericResponse!
+  resetPassword(
+    email: String!
+    otp: String!
+    newPassword: String!
+  ): GenericResponse!
 }

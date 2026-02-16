@@ -10,6 +10,8 @@ const getVoters = require("./query/getVoters");
 const deleteUser = require("./mutation/deleteUser");
 const updateUser = require("./mutation/updateUser");
 const updateCandidate = require("./mutation/updateCandidate");
+const requestPasswordReset = require("./mutation/requestPasswordReset");
+const resetPassword = require("./mutation/resetPassword");
 
 const resolvers = {
   Query: {
@@ -27,6 +29,8 @@ const resolvers = {
     deleteUser,
     updateUser,
     updateCandidate,
+    requestPasswordReset,
+    resetPassword,
   },
 };
 

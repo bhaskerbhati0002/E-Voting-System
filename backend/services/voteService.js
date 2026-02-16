@@ -1,5 +1,6 @@
 const Candidate = require("../models/Candidate");
 const User = require("../models/User");
+const { sendVoteConfirmationEmail } = require("../utils/mailer");
 
 const vote = async (candidateId, userId) => {
   const user = await User.findById(userId);
@@ -18,13 +19,24 @@ const vote = async (candidateId, userId) => {
     throw new Error("Candidate not found");
   }
 
-  // Increment vote
   candidate.voteCount += 1;
   await candidate.save();
 
-  // Mark user as voted
   user.hasVoted = true;
   await user.save();
+
+  // Send vote confirmation email (non-blocking style)
+  try {
+    await sendVoteConfirmationEmail({
+      to: user.email,
+      voterName: user.name,
+      candidateName: candidate.name,
+      partyName: candidate.party,
+    });
+  } catch (e) {
+    // Don't fail voting if email fails
+    console.error("Vote confirmation email failed:", e.message);
+  }
 
   return { message: "Vote cast successfully" };
 };
