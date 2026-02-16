@@ -14,8 +14,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    resetOtpHash: { type: String, default: null },
+    resetOtpExpiresAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("User", userSchema);
