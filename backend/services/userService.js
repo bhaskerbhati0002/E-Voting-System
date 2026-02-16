@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendOtpEmail } = require("../utils/mailer");
 
-const registerUser = async ({ name, email, password }) => {
+const registerUser = async ({ name, email, voterId, password }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new Error("User already exists");
@@ -15,6 +15,7 @@ const registerUser = async ({ name, email, password }) => {
   const user = await User.create({
     name,
     email,
+    voterId,
     password: hashedPassword,
   });
 

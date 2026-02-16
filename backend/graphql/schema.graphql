@@ -43,6 +43,7 @@ type GenericResponse {
 input RegisterInput {
   name: String!
   email: String!
+  voterId: String!
   password: String!
 }
 
