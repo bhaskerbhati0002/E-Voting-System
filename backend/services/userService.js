@@ -3,11 +3,16 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendOtpEmail } = require("../utils/mailer");
+const { sendRegistrationConfirmationEmail } = require("../utils/mailer");
 
 const registerUser = async ({ name, email, voterId, password }) => {
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new Error("User already exists");
+  const existingEmail = await User.findOne({ email });
+  const existingVoterId = await User.findOne({ voterId });
+  if (existingEmail) {
+    throw new Error("An account with this email already exists");
+  }
+  if (existingVoterId) {
+    throw new Error("Voter ID already registered");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -18,6 +23,15 @@ const registerUser = async ({ name, email, voterId, password }) => {
     voterId,
     password: hashedPassword,
   });
+
+  try {
+    await sendRegistrationConfirmationEmail({
+      to: user.email,
+      userName: name,
+    });
+  } catch (e) {
+    console.error("registration confirmation email failed:", e.message);
+  }
 
   const token = jwt.sign(
     { userId: user._id, role: user.role },
