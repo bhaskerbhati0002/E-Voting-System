@@ -107,4 +107,51 @@ This is an automated confirmation email.`;
   return { ok: true };
 }
 
-module.exports = { sendOtpEmail, sendVoteConfirmationEmail };
+async function sendRegistrationConfirmationEmail({ to, userName }) {
+  if (!transporterPromise) transporterPromise = getTransporter();
+  const transporter = await transporterPromise;
+
+  const from =
+    process.env.MAIL_FROM || "E-Voting System <no-reply@evoting.local>";
+
+  const subject = "Account Registered Successfully — E-Voting System";
+
+  const text = ``;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
+      <h2 style="margin: 0 0 10px;">✅ Account Created Successfully</h2>
+      <p style="margin: 0 0 12px;">
+        Hello <b>${userName || "User"}</b>,
+      </p>
+      <p style="margin: 0 0 12px;">
+        Thanks for choosing <b>E-Voting System</b> as your trusted digital election platform.
+        Your account has been <b>successfully created</b>.
+      </p>
+
+      <p style="margin: 14px 0 0; font-size: 12px; color: #64748b;">
+        This is an automated email for confirmation purposes.
+      </p>
+    </div>
+  `;
+
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  // For Ethereal testing only (if you're using it somewhere)
+  const previewUrl = nodemailer.getTestMessageUrl?.(info);
+  if (previewUrl) console.log("📩 registration Email Preview:", previewUrl);
+
+  return { ok: true };
+}
+
+module.exports = {
+  sendOtpEmail,
+  sendVoteConfirmationEmail,
+  sendRegistrationConfirmationEmail,
+};
