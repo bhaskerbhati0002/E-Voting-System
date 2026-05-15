@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     voterId: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    faceDescriptor: {
+      type: [Number],
+      default: [],
+    },
     role: {
       type: String,
       enum: ["ADMIN", "VOTER"],
