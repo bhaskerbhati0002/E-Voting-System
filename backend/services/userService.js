@@ -5,14 +5,19 @@ const crypto = require("crypto");
 const { sendOtpEmail } = require("../utils/mailer");
 const { sendRegistrationConfirmationEmail } = require("../utils/mailer");
 
-const registerUser = async ({ name, email, voterId, password }) => {
+const registerUser = async (input) => {
+  const { name, email, voterId, password, faceDescriptor } = input;
+
   const existingEmail = await User.findOne({ email });
-  const existingVoterId = await User.findOne({ voterId });
+
   if (existingEmail) {
-    throw new Error("An account with this email already exists");
+    throw new Error("Email already registered");
   }
-  if (existingVoterId) {
-    throw new Error("Voter ID already registered");
+
+  const existingVoter = await User.findOne({ voterId });
+
+  if (existingVoter) {
+    throw new Error("Voter ID already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -22,45 +27,90 @@ const registerUser = async ({ name, email, voterId, password }) => {
     email,
     voterId,
     password: hashedPassword,
+    faceDescriptor,
   });
 
-  try {
-    await sendRegistrationConfirmationEmail({
-      to: user.email,
-      userName: name,
-    });
-  } catch (e) {
-    console.error("registration confirmation email failed:", e.message);
-  }
-
   const token = jwt.sign(
-    { userId: user._id, role: user.role },
+    {
+      userId: user._id,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" },
+    {
+      expiresIn: "1h",
+    },
   );
 
-  return { token, user };
+  return {
+    token,
+    user,
+  };
 };
 
-const loginUser = async ({ email, password }) => {
+const verifyPassword = async (email, password) => {
   const user = await User.findOne({ email });
+
   if (!user) {
     throw new Error("Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
+
   if (!isMatch) {
     throw new Error("Invalid credentials");
   }
 
+  return {
+    success: true,
+    userId: user._id,
+    role: user.role,
+    faceDescriptor: user.faceDescriptor,
+  };
+};
+
+const completeLogin = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   const token = jwt.sign(
-    { userId: user._id, role: user.role },
+    {
+      userId: user._id,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" },
+    {
+      expiresIn: "1h",
+    },
   );
 
-  return { token, user };
+  return {
+    token,
+    user,
+  };
 };
+
+// const loginUser = async ({ email, password }) => {
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     throw new Error("Invalid credentials");
+//   }
+
+//   const isMatch = await bcrypt.compare(password, user.password);
+//   if (!isMatch) {
+//     throw new Error("Invalid credentials");
+//   }
+
+//   const token = jwt.sign(
+//     { userId: user._id, role: user.role },
+//     process.env.JWT_SECRET,
+//     { expiresIn: "1h" },
+//   );
+
+//   return { token, user };
+// };
 
 const getVoters = async () => {
   return await User.find({ role: "VOTER" });
@@ -151,10 +201,12 @@ const resetPassword = async ({ email, otp, newPassword }) => {
 
 module.exports = {
   registerUser,
-  loginUser,
+  // loginUser,
   getVoters,
   deleteUser,
   updateUser,
   requestPasswordReset,
   resetPassword,
+  verifyPassword,
+  completeLogin,
 };

@@ -40,11 +40,24 @@ type GenericResponse {
   message: String!
 }
 
+type PasswordVerificationResponse {
+  success: Boolean!
+  userId: ID!
+  role: String!
+  faceDescriptor: [Float!]!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
 input RegisterInput {
   name: String!
   email: String!
   voterId: String!
   password: String!
+  faceDescriptor: [Float!]!
 }
 
 input LoginInput {
@@ -72,7 +85,7 @@ type Query {
 }
 
 type Mutation {
-  registerUser(input: RegisterInput!): AuthResponse
+  registerUser(input: RegisterInput!): AuthPayload
   loginUser(input: LoginInput!): AuthResponse
   createCandidate(input: CreateCandidateInput!): Candidate!
   deleteCandidate(candidateId: ID!): String!
@@ -86,4 +99,9 @@ type Mutation {
     otp: String!
     newPassword: String!
   ): GenericResponse!
+  verifyPassword(
+    email: String!
+    password: String!
+  ): PasswordVerificationResponse!
+  completeLogin(userId: ID!): AuthPayload!
 }
