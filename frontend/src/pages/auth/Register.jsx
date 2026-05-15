@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import { useNavigate, Link } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import FaceRegistration from "../../components/FaceRegistration";
 
 const REGISTER_USER = gql`
   mutation Register($input: RegisterInput!) {
@@ -29,6 +30,8 @@ export default function Register() {
     password: "",
   });
 
+  const [faceDescriptor, setFaceDescriptor] = useState([]);
+
   const [registerUser, { loading, error }] = useMutation(REGISTER_USER, {
     onCompleted: (data) => {
       const { token, user } = data.registerUser;
@@ -53,9 +56,17 @@ export default function Register() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (faceDescriptor.length === 0) {
+      alert("Please capture your face first");
+      return;
+    }
+
     registerUser({
       variables: {
-        input: formData,
+        input: {
+          ...formData,
+          faceDescriptor,
+        },
       },
     });
   };
@@ -95,9 +106,11 @@ export default function Register() {
               className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm mb-1 text-slate-600">Voter ID</label>
+            <label className="block text-sm mb-1 text-slate-600">
+              Voter ID
+            </label>
             <input
               type="text"
               name="voterId"
@@ -109,7 +122,9 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-slate-600">Password</label>
+            <label className="block text-sm mb-1 text-slate-600">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -119,6 +134,8 @@ export default function Register() {
               className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
             />
           </div>
+
+          <FaceRegistration onFaceCaptured={setFaceDescriptor} />
 
           {error && <p className="text-red-500 text-sm">{error.message}</p>}
 

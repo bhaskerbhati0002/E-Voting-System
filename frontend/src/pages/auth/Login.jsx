@@ -5,11 +5,38 @@ import { useNavigate, Link } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import ResetPasswordModal from "./ResetPasswordModal";
+import FaceVerification from "../../components/FaceVerification";
 
 const LOGIN_USER = gql`
   mutation Login($input: LoginInput!) {
     loginUser(input: $input) {
       token
+      user {
+        id
+        name
+        email
+        role
+      }
+    }
+  }
+`;
+
+const VERIFY_PASSWORD = gql`
+  mutation VerifyPassword($email: String!, $password: String!) {
+    verifyPassword(email: $email, password: $password) {
+      success
+      userId
+      role
+      faceDescriptor
+    }
+  }
+`;
+
+const COMPLETE_LOGIN = gql`
+  mutation CompleteLogin($userId: ID!) {
+    completeLogin(userId: $userId) {
+      token
+
       user {
         id
         name
@@ -28,6 +55,10 @@ export default function Login() {
     email: "",
     password: "",
   });
+
+  const [showFaceVerification, setShowFaceVerification] = useState(false);
+  const [storedDescriptor, setStoredDescriptor] = useState([]);
+  const [tempUserId, setTempUserId] = useState("");
 
   const [loginUser, { loading, error }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
@@ -49,6 +80,9 @@ export default function Login() {
     },
   });
 
+  const [verifyPasswordMutation] = useMutation(VERIFY_PASSWORD);
+  const [completeLoginMutation] = useMutation(COMPLETE_LOGIN);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -56,14 +90,57 @@ export default function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      const { data } = await verifyPasswordMutation({
+        variables: {
+          email: formData.email,
+          password: formData.password,
+        },
+      });
+      const response = data.verifyPassword;
+      const role = response.role;
+      setStoredDescriptor(response.faceDescriptor);
+      setTempUserId(response.userId);
 
-    loginUser({
-      variables: {
-        input: formData,
-      },
-    });
+      // ADMIN LOGIN
+      if (role === "ADMIN") {
+        const loginResponse = await completeLoginMutation({
+          variables: {
+            userId: response.userId,
+          },
+        });
+        const { token, user } = loginResponse.data.completeLogin;
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("name", user.name);
+        window.location.href = "/admin";
+        return;
+      }
+
+      // VOTER LOGIN
+      setShowFaceVerification(true);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleFaceVerified = async () => {
+    try {
+      const { data } = await completeLoginMutation({
+        variables: {
+          userId: tempUserId,
+        },
+      });
+      const { token, user } = data.completeLogin;
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("name", user.name);
+      window.location.href = user.role === "ADMIN" ? "/admin" : "/voter";
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -75,6 +152,13 @@ export default function Login() {
         <p className="text-center text-slate-500 mb-6">
           Login to participate in the secure election process
         </p>
+
+        {showFaceVerification && (
+          <FaceVerification
+            storedDescriptor={storedDescriptor}
+            onVerified={handleFaceVerified}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 w-80">
           <div>
